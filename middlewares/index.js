@@ -17,7 +17,7 @@ const  redirectHome = (req, resp, next)=>{
 };
 
 const  redirectLogin = (req, resp, next)=>{
-    resp.send(process.env);
+
     if(!req.session.user){
         resp.redirect('/auth/login');
     } else {
