@@ -3,7 +3,7 @@ const session = require('express-session');
 const FileStore = require('session-file-store')(session);
 const List = require('../models').List;
 const fileStoreOptions = {};
-const DEFAULT_ENV = process.env.DEFAULT_ENV || 'development';
+const DEFAULT_ENV = process.env.NODE_ENV || 'development';
 const MAX_AGE = process.env.MAX_AGE ||  60*60*1000;
 const SECRET = process.env.SECRET ||  'Our beautiful secret';
 const  redirectHome = (req, resp, next)=>{
