@@ -3,14 +3,17 @@ const router = express.Router();
 const list = require('../controllers/listsController');
 const {getTodosByListId} = require('../controllers/todosController');
 const {manageFilter, userOwnsList} = require('../middlewares');
+const {getValues} = require('../helpers');
 router.get('/', async (req, res) => {
 
     try {
         const {q} = req.query;
         const {id} = req.session.user;
-        const result = await list.getLists({q, userId: id});
+        //const result =
+        const lists = getValues(await list.getLists({q, userId: id}));
+
         res.render('index', {
-                lists: result,
+                lists,
                 showBackButton: false,
                 user: req.session.user,
                 errors: req.flash('errors'),
@@ -50,29 +53,38 @@ router.get('/new', async (req, res) => {
     }
 
 });
-router.get('/:list_id([0-9]+)/todos',userOwnsList, manageFilter, async (req, res) => {
+router.get('/:list_id([0-9]+)/todos', userOwnsList, manageFilter, async (req, res) => {
     try {
         const listId = req.params.list_id;
         let {completed, q} = req.query;
         const tmpCompleted = completed;
-        if(completed === undefined){
+        if (completed === undefined) {
             completed = 0;
         }
         const listObj = await list.getListById(listId);
 
-        const result = await getTodosByListId(listId, completed);
-        const user = req.session.user;
-        const lists = await list.getListByUserId(user.id);
+        const result = await getTodosByListId(listId, completed)
+        const todos = [];
+        result.forEach(todo => {
 
+            todos.push(todo.toJSON());
+        });
+        const user = req.session.user;
+        const listsResult = await list.getListByUserId(user.id);
+        const lists = [];
+        listsResult.forEach(list => {
+
+            lists.push(list.toJSON());
+        });
         res.render('todos', {
-                todos: result, list_name: listObj.name,
+                todos, list_name: listObj.name,
                 user: req.session.user,
                 listId,
-                  user,
-                   lists,
-                  q,
-            completed : tmpCompleted,
-            showFilter : 1
+                user,
+                lists,
+                q,
+                completed: tmpCompleted,
+                showFilter: 1
 
             }
         );
@@ -81,7 +93,7 @@ router.get('/:list_id([0-9]+)/todos',userOwnsList, manageFilter, async (req, res
     }
 
 });
-router.delete('/:list_id([0-9]+)',userOwnsList, async (req, resp) => {
+router.delete('/:list_id([0-9]+)', userOwnsList, async (req, resp) => {
     try {
         const deleted = await list.deleteList(req.params.list_id);
         req.flash('messages', 'List deleted correclty!');
@@ -92,7 +104,7 @@ router.delete('/:list_id([0-9]+)',userOwnsList, async (req, resp) => {
         resp.redirect('/');
     }
 });
-router.patch('/:list_id([0-9]+)',userOwnsList, async (req, resp) => {
+router.patch('/:list_id([0-9]+)', userOwnsList, async (req, resp) => {
     try {
         const updated = await list.updateList(req.params.list_id, req.body.list_name);
         req.flash('messages', 'List modified correctly!')
